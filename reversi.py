@@ -1,8 +1,9 @@
 import numpy as np
 from enum import Enum
 import copy
+import random
 
-SEARCH_DEPTH = 10000
+SEARCH_DEPTH = 50
 
 DIRECTION = {
     "up-left": (-1, -1), 
@@ -23,15 +24,25 @@ class GAMESTATE(Enum):
 
 class ReversiGame():
     player = 1
+    board = [[0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, -1, 1, 0, 0, 0],
+            [0, 0, 0, 1, -1, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0]]
+
     def __init__(self):
+        self.player = 1
         self.board = [[0, 0, 0, 0, 0, 0, 0, 0],
-                      [0, 0, 0, 0, 0, 0, 0, 0],
-                      [0, 0, 0, 0, 0, 0, 0, 0],
-                      [0, 0, 0, -1, 1, 0, 0, 0],
-                      [0, 0, 0, 1, -1, 0, 0, 0],
-                      [0, 0, 0, 0, 0, 0, 0, 0],
-                      [0, 0, 0, 0, 0, 0, 0, 0],
-                      [0, 0, 0, 0, 0, 0, 0, 0]]
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, -1, 1, 0, 0, 0],
+            [0, 0, 0, 1, -1, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0]]
         
     def display(self):
         print("   0  1  2  3  4  5  6  7")
@@ -46,26 +57,32 @@ class ReversiGame():
                     print("  0", end = "")
             print("")
 
-    def count(self, needed_player = player):
+    def count(self, curr_board = None, curr_check_player = None):
         '''
         Count to check win state
         '''
+        if curr_board is None:
+            curr_board = self.board
+        if curr_check_player is None:
+            curr_check_player = self.player
         count = 0
         for x in range(8):
             for y in range(8):
-                if self.board[x][y] == needed_player:
+                if curr_board[x][y] == curr_check_player:
                     count += 1
         return count
     
-    def get_winner(self) -> GAMESTATE:
+    def get_winner(self, curr_board = board) -> GAMESTATE:
         '''
         Check if the game is end or not. If yes, who win?
         '''
-        if len(self.get_legal_moves(1)) > 0 or len(self.get_legal_moves(-1)) > 0:
+        if len(self.get_legal_moves(curr_board, 1)) > 0:
+            return GAMESTATE.Running
+        if len(self.get_legal_moves(curr_board, -1)) > 0:
             return GAMESTATE.Running
 
-        player1_count = self.count(1)
-        player2_count = self.count(-1)
+        player1_count = self.count(curr_board, 1)
+        player2_count = self.count(curr_board, -1)
         if player1_count == player2_count:
             return GAMESTATE.Draw
         elif player1_count > player2_count:
@@ -73,60 +90,69 @@ class ReversiGame():
         else:
             return GAMESTATE.Player2
     
-    def get_positions(self, needed_player = player) -> list:
+    def get_positions(self, curr_board = None, needed_player = None) -> list:
         '''
         Get all position on the board that equal to needed_player (default = current player) 
         '''
+        if curr_board is None:
+            curr_board = self.board
+        
+        if needed_player is None:
+            needed_player = self.player
+
         positions = []
         for y in range(8):
             for x in range(8):
-                if self.board[x][y] == needed_player:
+                if curr_board[x][y] == needed_player:
                     positions.append((x, y))
         return positions
     
-    def get_legal_moves(self, needed_player = player) -> list:
+    def get_legal_moves(self, curr_board = board, needed_player = player) -> list:
         '''
         Get all moves for each position that collected from get_positions()
         '''
         moves = set()
-        for position in self.get_positions(needed_player):
-            newmoves = self.get_moves_for_position(position)
+        for position in self.get_positions(curr_board, needed_player):
+            newmoves = self.get_moves_for_position(curr_board, position)
             moves.update(newmoves)
         return list(moves)
     
-    def get_moves_for_position(self, position):
+    def get_moves_for_position(self, curr_board = None, position = (0,0)):
         '''
         Get all moves for a position
         '''
+        if curr_board is None:
+            curr_board = self.board
+
         (x,y) = position
-        temp_player = self.board[x][y]
+        temp_player = curr_board[x][y]
         if temp_player == 0:
             return None
 
         moves = []
         for dir in DIRECTION:
-            move = self.discover_move(position, DIRECTION[dir])
+            move = self.discover_move(curr_board, position, DIRECTION[dir])
             if move:
                 moves.append(move)
         return moves
     
-    def discover_move(self, origin_pos, dir):
+    def discover_move(self, curr_board = board, origin_pos = (0,0), dir = (1,1)):
         '''
         Traverse 8 directions to check moves for a position
         '''
         x, y = origin_pos
-        temp_player = self.board[x][y]
+        temp_player = curr_board[x][y]
         flips = []
 
         for x, y in self.increment_move(origin_pos, dir):
-            if self.board[x][y] == 0:
+            if curr_board[x][y] == 0:
                 if flips:
                     return x, y
                 else:
                     return None
-            elif self.board[x][y] == temp_player:
+            elif curr_board[x][y] == temp_player:
                 return None
-            elif self.board[x][y] == -temp_player:
+            elif curr_board[x][y] == -temp_player:
                 flips.append((x, y))
 
     def increment_move(self, move, direction):
@@ -143,53 +169,70 @@ class ReversiGame():
         Do the move at the pos position
         '''
         flips = (flip for direction in DIRECTION
-                 for flip in self.get_flips(pos, DIRECTION[direction]))
+                 for flip in self.get_flips(self.board, pos, DIRECTION[direction], self.player))
 
         for x, y in flips:
             self.board[x][y] = self.player
 
         self.player = -self.player
 
-    def make_temp_move(self, temp_board, pos, curr_check_player):
+    def make_temp_move(self, temp_board = None, pos = (0,0), curr_check_player = None):
+        if temp_board is None:
+            temp_board = self.board
         flips = (flip for direction in DIRECTION
-                 for flip in self.get_flips(pos, DIRECTION[direction]))
+                 for flip in self.get_flips(temp_board, pos, DIRECTION[direction], curr_check_player))
         for x, y in flips:
-            temp_board[x][y] = self.player
+            temp_board[x][y] = curr_check_player
+        return temp_board
 
-    def get_flips(self, origin, direction):
+    def get_flips(self, curr_board = None, origin = (0,0), direction = (1,1), needed_player = None):
         '''
         Flip all of the unit from origin position to the direction
         '''
+        if curr_board is None:
+            curr_board = self.board
+        if needed_player is None:
+            needed_player = self.player
         flips = [origin]
 
         for x, y in self.increment_move(origin, direction):
-            if self.board[x][y] == 0:
+            if curr_board[x][y] == 0:
                 return []
-            elif self.board[x][y] == -self.player:
+            elif curr_board[x][y] == -needed_player:
                 flips.append((x, y))
-            elif self.board[x][y] == self.player:
+            elif curr_board[x][y] == needed_player:
                 return flips
 
         return []
+    
+    def lost_turn(self):
+        self.player = -self.player
     
     def minimax(self, temp_board, depth, curr_check_player = player):
         '''
         Implements the minimax algorithm with alpha-beta pruning to determine the best move
         for the given player on the given board.
         '''
-        if depth == 0 or self.get_winner():
-            return self.count(curr_check_player)
+        temp = self.get_winner(temp_board)
+        if temp == GAMESTATE.Player1 or temp == GAMESTATE.Draw:
+            return -1000
+        elif temp == GAMESTATE.Player2:
+            return 1000
+        if depth == 0:
+            return self.count(temp_board, -1) - self.count(temp_board, 1)
 
-        if curr_check_player == 1:
+        if curr_check_player == -1:
             best_score = float('-inf')
-            for move in self.get_legal_moves(curr_check_player):
+            temp = self.get_legal_moves(temp_board, curr_check_player)
+            for move in temp:
                 new_board = self.make_temp_move(temp_board, (move[0], move[1]), curr_check_player)
                 score = self.minimax(new_board, depth - 1, -curr_check_player)
                 best_score = max(best_score, score)
             return best_score
         else:
             best_score = float('inf')
-            for move in self.get_legal_moves(curr_check_player):
+            temp = self.get_legal_moves(temp_board, curr_check_player)
+            for move in temp:
                 new_board = self.make_temp_move(temp_board, (move[0], move[1]), curr_check_player)
                 score = self.minimax(new_board, depth - 1, -curr_check_player)
                 best_score = min(best_score, score)
@@ -203,8 +246,10 @@ class ReversiGame():
         """
         best_move = None
         best_score = float('-inf')
-        for move in self.get_legal_moves(curr_check_player):
-            new_board = self.make_temp_move(temp_board, (move[0], move[1]), curr_check_player)
+        for move in self.get_legal_moves(temp_board, curr_check_player):
+            temp_temp_board = copy.deepcopy(temp_board)
+            new_board = self.make_temp_move(temp_temp_board, (move[0], move[1]), curr_check_player)
+            # print(new_board)
             score = self.minimax(new_board, SEARCH_DEPTH, -curr_check_player)
             if score > best_score:
                 best_move = move
@@ -212,32 +257,44 @@ class ReversiGame():
         return best_move
 
 
-if __name__ == "__main__":
-    a = ReversiGame()
-    a.display() 
-    
+def two_player():
     while (True):
-        temp = a.get_legal_moves(a.player)
-        # print("Player", a.player, "has legal moves", temp)
-        if temp != None:
-            x, y = temp[-1]
-        else:
-            i = input()
-        print("Player play", x, y)
-        # x, y = [int(x) for x in input().split()]
-        # while ((x,y) not in temp):
-        #     x, y = [int(x) for x in input().split()]    
+        temp = a.get_legal_moves(a.board, a.player)
+        print("Player", a.player, "has legal moves", temp)
+        x, y = [int(x) for x in input().split()]
+        while ((x,y) not in temp):
+            x, y = [int(x) for x in input().split()]    
         a.execute_move((x,y))
         a.display()
 
-        # temp = a.get_legal_moves(a.player)
-        # print("Player", a.player, "has legal moves", temp)
+def random_player_vs_computer():
+    while True:
+        temp = a.get_legal_moves(a.board, a.player)
+        if temp != []:
+            x, y = temp[random.randint(0, len(temp)-1)]
+            # print("Random play", x, y)
+            a.execute_move((x,y))
+        else:
+            # print("END GAME")
+            print(a.count(a.board, -1) - a.count(a.board, 1))
+            break
+        # a.display()
+
         temp_board = copy.deepcopy(a.board)
-        temp_player = a.player
-        x, y = a.get_best_move(temp_board, temp_player)
-        print("Computer play", x, y)
-        # x, y = [int(x) for x in input().split()]
-        # while ((x,y) not in temp):
-        #     x, y = [int(x) for x in input().split()]    
-        a.execute_move((x,y))
-        a.display()
+        temp = a.get_best_move(temp_board, -1)
+        if temp is not None:
+            x, y = temp
+            # print("Computer play", x, y)
+            a.execute_move((x,y))
+        else:
+            # print("END GAME")
+            print(a.count(a.board, -1) - a.count(a.board, 1))
+            break
+        # a.display()
+
+if __name__ == "__main__":
+    for i in range (10):
+        a = ReversiGame()
+        # a.display() 
+        random_player_vs_computer()
+        a = None

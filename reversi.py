@@ -2,8 +2,13 @@ import numpy as np
 from enum import Enum
 import copy
 import random
+import time
 
-SEARCH_DEPTH = 50
+SEARCH_DEPTH = 3
+
+LOOP = 1
+win = 0
+lose = 0
 
 DIRECTION = {
     "up-left": (-1, -1), 
@@ -193,6 +198,7 @@ class ReversiGame():
             curr_board = self.board
         if needed_player is None:
             needed_player = self.player
+
         flips = [origin]
 
         for x, y in self.increment_move(origin, direction):
@@ -218,6 +224,12 @@ class ReversiGame():
             return -1000
         elif temp == GAMESTATE.Player2:
             return 1000
+        temp = self.get_legal_moves(temp_board, -1)
+        if temp == []:
+            return -1000
+        temp = self.get_legal_moves(temp_board, 1)
+        if temp == []:
+            return 1000
         if depth == 0:
             return self.count(temp_board, -1) - self.count(temp_board, 1)
 
@@ -225,7 +237,8 @@ class ReversiGame():
             best_score = float('-inf')
             temp = self.get_legal_moves(temp_board, curr_check_player)
             for move in temp:
-                new_board = self.make_temp_move(temp_board, (move[0], move[1]), curr_check_player)
+                temp_temp_board = [[i for i in row] for row in temp_board]
+                new_board = self.make_temp_move(temp_temp_board, (move[0], move[1]), curr_check_player)
                 score = self.minimax(new_board, depth - 1, -curr_check_player)
                 best_score = max(best_score, score)
             return best_score
@@ -233,7 +246,8 @@ class ReversiGame():
             best_score = float('inf')
             temp = self.get_legal_moves(temp_board, curr_check_player)
             for move in temp:
-                new_board = self.make_temp_move(temp_board, (move[0], move[1]), curr_check_player)
+                temp_temp_board = [[i for i in row] for row in temp_board]
+                new_board = self.make_temp_move(temp_temp_board, (move[0], move[1]), curr_check_player)
                 score = self.minimax(new_board, depth - 1, -curr_check_player)
                 best_score = min(best_score, score)
             return best_score
@@ -246,10 +260,10 @@ class ReversiGame():
         """
         best_move = None
         best_score = float('-inf')
-        for move in self.get_legal_moves(temp_board, curr_check_player):
-            temp_temp_board = copy.deepcopy(temp_board)
+        temp = self.get_legal_moves(temp_board, curr_check_player)
+        for move in temp:
+            temp_temp_board = [[i for i in row] for row in temp_board]
             new_board = self.make_temp_move(temp_temp_board, (move[0], move[1]), curr_check_player)
-            # print(new_board)
             score = self.minimax(new_board, SEARCH_DEPTH, -curr_check_player)
             if score > best_score:
                 best_move = move
@@ -257,7 +271,7 @@ class ReversiGame():
         return best_move
 
 
-def two_player():
+def two_player(a : ReversiGame):
     while (True):
         temp = a.get_legal_moves(a.board, a.player)
         print("Player", a.player, "has legal moves", temp)
@@ -267,34 +281,58 @@ def two_player():
         a.execute_move((x,y))
         a.display()
 
-def random_player_vs_computer():
+def random_player_vs_computer(a : ReversiGame):
+    global win
+    global lose
     while True:
         temp = a.get_legal_moves(a.board, a.player)
         if temp != []:
             x, y = temp[random.randint(0, len(temp)-1)]
-            # print("Random play", x, y)
+            print("Random play", x, y)
             a.execute_move((x,y))
         else:
-            # print("END GAME")
-            print(a.count(a.board, -1) - a.count(a.board, 1))
-            break
-        # a.display()
+            if a.get_winner(a.board) != GAMESTATE.Running:
+                # print("END GAME")
+                res = a.count(a.board, -1) - a.count(a.board, 1)
+                if res > 0:
+                    win += 1
+                else: 
+                    lose += 1
+                print(res, end = " ")
+                break
+            else:
+                a.lost_turn()
+        a.display()
 
-        temp_board = copy.deepcopy(a.board)
+        temp_board = [[i for i in row] for row in a.board]
         temp = a.get_best_move(temp_board, -1)
         if temp is not None:
             x, y = temp
-            # print("Computer play", x, y)
+            print("Computer play", x, y)
             a.execute_move((x,y))
         else:
-            # print("END GAME")
-            print(a.count(a.board, -1) - a.count(a.board, 1))
-            break
-        # a.display()
+            if a.get_winner(a.board) != GAMESTATE.Running:
+                # print("END GAME")
+                res = a.count(a.board, -1) - a.count(a.board, 1)
+                if res > 0:
+                    win += 1
+                else: 
+                    lose += 1
+                print(res, end = " ")
+                break
+            else:
+                a.lost_turn()
+        a.display()
 
 if __name__ == "__main__":
-    for i in range (10):
+    for i in range (LOOP):
         a = ReversiGame()
+        time_start = time.time()
         # a.display() 
-        random_player_vs_computer()
+        random_player_vs_computer(a)
+        time_end = time.time()
+        print(time_end - time_start)
         a = None
+    
+    print()
+    print(win, lose)

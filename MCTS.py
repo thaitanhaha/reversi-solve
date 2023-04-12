@@ -15,8 +15,8 @@ class MCTS:
     # def isLoseState(self, board, player):
     #
 
-    def isTerminalState(self, player, board):
-        return len(self.makeMoves(player, board)) == 0
+    def isTerminalState(self, board):
+        return not (len(self.makeMoves(1, board)) > 0 or len(self.makeMoves(-1, board)) > 0)
 
     def makeMoves(self, player, board):
         tempGame = ReversiGame()
@@ -24,6 +24,10 @@ class MCTS:
         tempGame.player = player
         movesList = tempGame.get_legal_moves(player)
         arr = []
+        if len(movesList) == 0:
+            newBoard = copy.deepcopy(board)
+            arr.append((None, newBoard))
+            return arr
         for move in movesList:
             tempGame.execute_move(move)
             newBoard = copy.deepcopy(tempGame.board)
@@ -46,7 +50,7 @@ class MCTS:
         Player = node.player
         Board = copy.deepcopy(node.board)
         count = 0
-        while (not self.isTerminalState(Player, Board)) and count <= 30:
+        while (not self.isTerminalState(Board)) and count <= 30:
             possible_moves = self.makeMoves(Player, Board)
             count += 1
             if (len(possible_moves)) == 0:
@@ -77,7 +81,7 @@ class MCTS:
 
     def _tree_policy(self, node: Node):
         current_node = node
-        while not self.isTerminalState(current_node.player, current_node.board):
+        while not self.isTerminalState(current_node.board):
             if not current_node.is_fully_expanded():
                 return self.expand(current_node)
             else:

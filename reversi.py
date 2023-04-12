@@ -139,6 +139,9 @@ class ReversiGame():
         '''
         Do the move at the pos position
         '''
+        if not pos:
+            self.player = -self.player
+            return
         flips = (flip for direction in DIRECTION
                  for flip in self.get_flips(pos, DIRECTION[direction]))
 
@@ -201,20 +204,22 @@ if __name__ == "__main__":
 
         temp = a.get_legal_moves(a.player)
         print("Player", a.player, "has legal moves", temp)
+        # if len(temp) == 0:
+        #     continue
         selected_node = mcts.solve(curr_node)
         selected_move = selected_node.move
         a.execute_move(selected_move)
         a.display()
         curr_node = selected_node
-        #print(str(curr_node.move), len(curr_node.children))
+        print(str(curr_node.move), len(curr_node.children))
         # if len(curr_node.children) == 0:
         if len(curr_node._untried_actions) == 0 and len(curr_node.children) == 0:
             curr_node._untried_actions = mcts.makeMoves(curr_node.player, curr_node.board)
         while not curr_node.is_fully_expanded():
             mcts.expand(curr_node)
-        # print(str(curr_node.move), len(curr_node.children))
-        # for child in curr_node.children:
-        #     print(str(child.move), end=",")
+        print(str(curr_node.move), len(curr_node.children))
+        for child in curr_node.children:
+            print(str(child.move), end=",")
 
         # temp = a.get_legal_moves(a.player)
         # print("Player", a.player, "has legal moves", temp)
@@ -224,19 +229,19 @@ if __name__ == "__main__":
         # a.execute_move((x,y))
         # a.display()
 
-        temp = a.get_legal_moves(a.player)
-        print("Player", a.player, "has legal moves", temp)
-        selected_node = mcts.solve(curr_node)
-        selected_move = selected_node.move
-        a.execute_move(selected_move)
-        a.display()
-        curr_node = selected_node
-        #print(str(curr_node.move), len(curr_node.children))
-        #if len(curr_node.children) == 0:
-        if len(curr_node._untried_actions) == 0 and len(curr_node.children) == 0:
-            curr_node._untried_actions = mcts.makeMoves(curr_node.player, curr_node.board)
-        while not curr_node.is_fully_expanded():
-            mcts.expand(curr_node)
+        # temp = a.get_legal_moves(a.player)
+        # print("Player", a.player, "has legal moves", temp)
+        # selected_node = mcts.solve(curr_node)
+        # selected_move = selected_node.move
+        # a.execute_move(selected_move)
+        # a.display()
+        # curr_node = selected_node
+        # print(str(curr_node.move), len(curr_node.children))
+        # #if len(curr_node.children) == 0:
+        # if len(curr_node._untried_actions) == 0 and len(curr_node.children) == 0:
+        #     curr_node._untried_actions = mcts.makeMoves(curr_node.player, curr_node.board)
+        # while not curr_node.is_fully_expanded():
+        #     mcts.expand(curr_node)
         # print(str(curr_node.move), len(curr_node.children))
         # for child in curr_node.children:
         #     print(str(child.move), end=",")

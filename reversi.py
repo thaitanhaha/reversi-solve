@@ -1,6 +1,7 @@
 import numpy as np
 from node import *
 from enum import Enum
+from MCTS import *
 
 DIRECTION = {
     "up-left": (-1, -1), 
@@ -166,20 +167,57 @@ class ReversiGame():
 if __name__ == "__main__":
     a = ReversiGame()
     a.display() 
-    
+    mcts = MCTS(a.board)
+    curr_node = Node(a.board, None, None, a.player)
+    curr_node._untried_actions = mcts.makeMoves(a.player, a.board)
+    while not curr_node.is_fully_expanded():
+        mcts.expand(curr_node)
+    # print(str(curr_node.move), len(curr_node.children))
+    # for child in curr_node.children:
+    #     print(str(child.move), end = ", ")
     while (True):
         temp = a.get_legal_moves(a.player)
         print("Player", a.player, "has legal moves", temp)
         x, y = [int(x) for x in input().split()]
         while ((x,y) not in temp):
-            x, y = [int(x) for x in input().split()]    
+            x, y = [int(x) for x in input().split()]
+        for child in curr_node.children:
+            if child.move == (x,y):
+                curr_node = child
+                break
         a.execute_move((x,y))
         a.display()
+        #print(str(curr_node.move), len(curr_node.children))
+        if len(curr_node.children) == 0:
+            if len(curr_node._untried_actions) == 0:
+                curr_node._untried_actions = mcts.makeMoves(curr_node.player, curr_node.board)
+            while not curr_node.is_fully_expanded():
+                mcts.expand(curr_node)
+        # print(str(curr_node.move), len(curr_node.children))
+        # for child in curr_node.children:
+        #     print(str(child.move), end=",")
+
+        # temp = a.get_legal_moves(a.player)
+        # print("Player", a.player, "has legal moves", temp)
+        # x, y = [int(x) for x in input().split()]
+        # while ((x,y) not in temp):
+        #     x, y = [int(x) for x in input().split()]
+        # a.execute_move((x,y))
+        # a.display()
 
         temp = a.get_legal_moves(a.player)
         print("Player", a.player, "has legal moves", temp)
-        x, y = [int(x) for x in input().split()]
-        while ((x,y) not in temp):
-            x, y = [int(x) for x in input().split()]    
-        a.execute_move((x,y))
+        selected_node = mcts.solve(curr_node)
+        selected_move = selected_node.move
+        a.execute_move(selected_move)
         a.display()
+        curr_node = selected_node
+        #print(str(curr_node.move), len(curr_node.children))
+        if len(curr_node.children) == 0:
+            if len(curr_node._untried_actions) == 0:
+                curr_node._untried_actions = mcts.makeMoves(curr_node.player, curr_node.board)
+            while not curr_node.is_fully_expanded():
+                mcts.expand(curr_node)
+        # print(str(curr_node.move), len(curr_node.children))
+        # for child in curr_node.children:
+        #     print(str(child.move), end=",")

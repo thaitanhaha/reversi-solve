@@ -20,12 +20,15 @@ class MCTS:
 
     def makeMoves(self, player, board):
         tempGame = ReversiGame()
-        tempGame.board = board
+        tempGame.board = copy.deepcopy(board)
         tempGame.player = player
         movesList = tempGame.get_legal_moves(player)
         arr = []
         for move in movesList:
-            newBoard = tempGame.execute_move(move)
+            tempGame.execute_move(move)
+            newBoard = copy.deepcopy(tempGame.board)
+            tempGame.board = copy.deepcopy(board)
+            tempGame.player = player
             arr.append((move, newBoard))
         return arr
 

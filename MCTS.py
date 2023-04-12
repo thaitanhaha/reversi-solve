@@ -15,8 +15,8 @@ class MCTS:
     # def isLoseState(self, board, player):
     #
 
-    def isTerminalState(self, board):
-        return not (len(self.makeMoves(1, board)) > 0 or len(self.makeMoves(-1, board)) > 0)
+    def isTerminalState(self, player, board):
+        return len(self.makeMoves(player, board)) == 0
 
     def makeMoves(self, player, board):
         tempGame = ReversiGame()
@@ -44,9 +44,9 @@ class MCTS:
 
     def rollout(self, node: Node):
         Player = node.player
-        Board = node.board
+        Board = copy.deepcopy(node.board)
         count = 0
-        while (not self.isTerminalState(Board)) and count <= 30:
+        while (not self.isTerminalState(Player, Board)) and count <= 30:
             possible_moves = self.makeMoves(Player, Board)
             count += 1
             if (len(possible_moves)) == 0:
@@ -77,10 +77,12 @@ class MCTS:
 
     def _tree_policy(self, node: Node):
         current_node = node
-        while not self.isTerminalState(current_node.board):
+        while not self.isTerminalState(current_node.player, current_node.board):
             if not current_node.is_fully_expanded():
                 return self.expand(current_node)
             else:
+                if len(current_node.children) == 0:
+                    break
                 current_node = self.best_child(current_node)
         return current_node
 
@@ -93,7 +95,7 @@ class MCTS:
 
         return self.best_child(node)
 
-    def solve(self, node: Node, simulation_no = 1000):
+    def solve(self, node: Node, simulation_no = 30):
         start_node = node
         #start_node._untried_actions = self.makeMoves(player, self.board)
         selected_node = self.best_action(start_node, simulation_no)

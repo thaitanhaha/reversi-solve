@@ -50,7 +50,7 @@ class MCTS:
         Player = node.player
         Board = copy.deepcopy(node.board)
         count = 0
-        while (not self.isTerminalState(Board)) and count <= 30:
+        while (not self.isTerminalState(Board)) and count <= 10:
             possible_moves = self.makeMoves(Player, Board)
             count += 1
             if (len(possible_moves)) == 0:

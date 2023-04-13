@@ -9,16 +9,24 @@ score_board = [[99, -8, 8, 6, 6, 8, -8, 99],
                [-8, -24, -4, -3, -3, -4, -24, -8],
                [99, -8, 8, 6, 6, 8, -8, 99]
                ]
-def minimax(node: Node, maxDepth, alpha, beta):
+def alphabeta(node: Node, maxDepth, alpha, beta, root: Node):
     if (len(node.children) == 0) or maxDepth == 0:
-        return evaluate(node.board, node.player)
-    for child in node.children:
-        result = minimax(child, maxDepth-1, -beta, -alpha)
-        new_val = -result
-        if new_val > alpha:
-            alpha = new_val
-        if alpha >= beta:
-            value = alpha
+        return evaluate(node.board, root.player)
+    if node.player == 1:
+        value = float('-inf')
+        for child in node.children:
+            value = max(value, alphabeta(child, maxDepth-1, alpha, beta, root))
+            alpha = max(alpha, value)
+            if value >= beta:
+                break
+        return value
+    else:
+        value = float('inf')
+        for child in node.children:
+            value = min(value, alphabeta(child, maxDepth-1, alpha, beta, root))
+            beta = min(beta, value)
+            if value <= alpha:
+                break
         return value
 
 def evaluate(board, player):

@@ -14,26 +14,37 @@ class MCTS:
     #
     # def isLoseState(self, board, player):
     #
+    def copy(self, board):
+        newBoard = []
+        for i in range(8):
+            temp = []
+            for j in range(8):
+                temp.append(board[i][j])
+            newBoard.append(temp)
+        return newBoard
 
     def isTerminalState(self, board):
-        return not (len(self.makeMoves(1, board)) > 0 or len(self.makeMoves(-1, board)) > 0)
+        return any(0 in row for row in board)
 
     def makeMoves(self, player, board):
         tempGame = ReversiGame()
-        tempGame.board = copy.deepcopy(board)
+        tempGame.board = self.copy(board)
         tempGame.player = player
         movesList = tempGame.get_legal_moves(player)
         arr = []
         if len(movesList) == 0:
-            newBoard = copy.deepcopy(board)
-            arr.append((None, newBoard))
+            #newBoard = self.copy(board)
+            #arr.append((None, newBoard))
+            arr.append((None, board))
             return arr
         for move in movesList:
             tempGame.execute_move(move)
-            newBoard = copy.deepcopy(tempGame.board)
-            tempGame.board = copy.deepcopy(board)
-            tempGame.player = player
+            #newBoard = self.copy(tempGame.board)
+            newBoard = tempGame.board
             arr.append((move, newBoard))
+            tempGame.board = self.copy(board)
+            tempGame.player = player
+            #arr.append((move, newBoard))
         return arr
 
     def expand(self, node: Node):
@@ -48,9 +59,9 @@ class MCTS:
 
     def rollout(self, node: Node):
         Player = node.player
-        Board = copy.deepcopy(node.board)
+        Board = self.copy(node.board)
         count = 0
-        while (not self.isTerminalState(Board)) and count <= 10:
+        while (not self.isTerminalState(Board)) and count <= 60:
             possible_moves = self.makeMoves(Player, Board)
             count += 1
             if (len(possible_moves)) == 0:
@@ -58,10 +69,7 @@ class MCTS:
             (move, newBoard) = random.choice(possible_moves)
             Player = -Player
             Board = newBoard
-        if Player == node.player:
-            return evaluate(Board, Player)
-        else:
-            return -evaluate(Board, Player)
+        return evaluate(Board, node.player)
 
     def back_propagate(self, v: Node, node: Node, result):
         while v != node.parent:
@@ -99,7 +107,7 @@ class MCTS:
 
         return self.best_child(node)
 
-    def solve(self, node: Node, simulation_no = 30):
+    def solve(self, node: Node, simulation_no = 10000):
         start_node = node
         #start_node._untried_actions = self.makeMoves(player, self.board)
         selected_node = self.best_action(start_node, simulation_no)

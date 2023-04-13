@@ -245,4 +245,4 @@ if __name__ == "__main__":
         # print(str(curr_node.move), len(curr_node.children))
         # for child in curr_node.children:
         #     print(str(child.move), end=",")
-    print(a.get_winner(), "wins")
+    print(a.get_winner())

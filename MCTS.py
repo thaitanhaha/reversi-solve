@@ -5,6 +5,8 @@ import math
 import random
 import copy
 import numpy as np
+import time
+
 class MCTS:
     def __init__(self, board):
         self.board = board
@@ -57,11 +59,12 @@ class MCTS:
         node.children.append(child_node)
         return child_node
 
-    def rollout(self, node: Node):
+    def rollout(self, node: Node, move_time):
+        start = time.time()
         Player = node.player
         Board = self.copy(node.board)
         count = 0
-        while (not self.isTerminalState(Board)) and count <= 60:
+        while (not self.isTerminalState(Board)) and count <= 60 and time.time() - start < move_time - 0.01:
             possible_moves = self.makeMoves(Player, Board)
             count += 1
             if (len(possible_moves)) == 0:
@@ -98,19 +101,19 @@ class MCTS:
                 current_node = self.best_child(current_node)
         return current_node
 
-    def best_action(self, node: Node, simulation_no):
+    def best_action(self, node: Node, simulation_no, move_time):
 
         for i in range(simulation_no):
             v = self._tree_policy(node)
-            reward = self.rollout(v)
+            reward = self.rollout(v, move_time - 0.01)
             self.back_propagate(v, node, reward)
 
         return self.best_child(node)
 
-    def solve(self, node: Node, simulation_no = 10000):
+    def solve(self, node: Node, move_time, simulation_no = 30000):
         start_node = node
         #start_node._untried_actions = self.makeMoves(player, self.board)
-        selected_node = self.best_action(start_node, simulation_no)
+        selected_node = self.best_action(start_node, simulation_no, move_time - 0.001)
         # self.VNode_count = len(self.expanded)
         # if not self.map.hasWon(selected_node.player):
         #     self.can_find_win_path = False

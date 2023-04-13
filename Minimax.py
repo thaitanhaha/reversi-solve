@@ -1,5 +1,7 @@
 from node import *
 from reversi import *
+import time
+
 score_board = [[99, -8, 8, 6, 6, 8, -8, 99],
                [-8, -24, -4, -3, -3, -4, -24, -8],
                [8, -4, 7, 4, 4, 7, -4, 8],

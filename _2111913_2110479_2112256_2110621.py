@@ -1,11 +1,13 @@
 from reversi import *
 from node import *
 from MCTS import *
+import time
 
 curr_node = None
 mcts = None
 
 def select_move(cur_state, player_to_move, remain_time):
+    start = time.time()
     global curr_node, mcts
     if remain_time == 60:
         mcts = MCTS(cur_state)
@@ -19,7 +21,8 @@ def select_move(cur_state, player_to_move, remain_time):
         curr_node._untried_actions = mcts.makeMoves(curr_node.player, curr_node.board)
     while not curr_node.is_fully_expanded():
         mcts.expand(curr_node)
-    selected_node = mcts.solve(curr_node)
+    end = time.time()
+    selected_node = mcts.solve(curr_node, min(remain_time, 2 - (end-start)))
     selected_move = selected_node.move
     #a.execute_move(selected_move)
     #a.display()

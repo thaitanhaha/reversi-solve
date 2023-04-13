@@ -2,6 +2,7 @@ import numpy as np
 from node import *
 from enum import Enum
 from MCTS import *
+import time
 
 DIRECTION = {
     "up-left": (-1, -1), 
@@ -201,12 +202,11 @@ if __name__ == "__main__":
         # print(str(curr_node.move), len(curr_node.children))
         # for child in curr_node.children:
         #     print(str(child.move), end=",")
-
         temp = a.get_legal_moves(a.player)
         print("Player", a.player, "has legal moves", temp)
         # if len(temp) == 0:
         #     continue
-        selected_node = mcts.solve(curr_node)
+        selected_node = mcts.solve(curr_node, 2)
         selected_move = selected_node.move
         a.execute_move(selected_move)
         a.display()
